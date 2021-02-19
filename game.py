@@ -2,6 +2,7 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple
+import numpy as np
 
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
@@ -54,24 +55,15 @@ class SnakeGame:
         if self.food in self.snake:
             self._place_food()
         
-    def play_step(self):
-        # 1. collect user input
+    def play_step(self, action):
+        # 1. collect AI input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    self.direction = Direction.LEFT
-                elif event.key == pygame.K_RIGHT:
-                    self.direction = Direction.RIGHT
-                elif event.key == pygame.K_UP:
-                    self.direction = Direction.UP
-                elif event.key == pygame.K_DOWN:
-                    self.direction = Direction.DOWN
         
         # 2. move
-        self._move(self.direction) # update the head
+        self._move(action) # update the head
         self.snake.insert(0, self.head)
         
         # 3. check if game over
@@ -116,7 +108,24 @@ class SnakeGame:
         self.display.blit(text, [0, 0])
         pygame.display.flip()
         
-    def _move(self, direction):
+    def _move(self, action):
+        clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP] # Index possibilities: 0, 1, 2, 3
+        index = clock_wise.index(self.direction) # self.direction = Direction.RIGHT ----> index = 0
+        
+        if np.array_equal(action, [1,0,0]): # [1,0,0] = straight
+            new_dir = clock_wise[index]
+        elif np.array_equal(action, [0,1,0]): # [0,1,0] = right turn
+            next_index = (index + 1) % 4
+            new_dir = clock_wise(next_index)
+        else:                               # [0,0,1] = left turn
+            next_index = (index - 1) % 4
+            new_dir = clock_wise(next_index)
+
+
+        self.direction = new_dir
+        
+        
+
         x = self.head.x
         y = self.head.y
         if direction == Direction.RIGHT:
@@ -130,18 +139,3 @@ class SnakeGame:
             
         self.head = Point(x, y)
             
-
-if __name__ == '__main__':
-    game = SnakeGame()
-    
-    # game loop
-    while True:
-        game_over, score = game.play_step()
-        
-        if game_over == True:
-            break
-        
-    print('Final Score', score)
-        
-        
-    pygame.quit()
