@@ -10,6 +10,7 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
+
 class Agent:
 
     def __init__(self):
@@ -34,36 +35,36 @@ class Agent:
         dir_d = game.direction == Direction.DOWN
 
         state = [
-            #danger streight
+            # Danger straight
             (dir_r and game.is_collision(point_r)) or
             (dir_l and game.is_collision(point_l)) or
             (dir_u and game.is_collision(point_u)) or
             (dir_d and game.is_collision(point_d)),
 
-            #Danger right
-            (dir_u and game.is_collision(point_r)) or            
+            # Danger right
+            (dir_u and game.is_collision(point_r)) or
             (dir_d and game.is_collision(point_l)) or
             (dir_l and game.is_collision(point_u)) or
             (dir_r and game.is_collision(point_d)),
 
-            #Danger left
+            # Danger left
             (dir_d and game.is_collision(point_r)) or
             (dir_u and game.is_collision(point_l)) or
             (dir_r and game.is_collision(point_u)) or
             (dir_l and game.is_collision(point_d)),
 
-            #Move dirction
+            # Move direction
             dir_l,
             dir_r,
             dir_u,
             dir_d,
 
-
-            game.food.x < game.head.x,
-            game.food.x > game.head.x,        
-            game.food.y < game.head.y,
-            game.food.y > game.head.y
-            ]
+            # Food location
+            game.food.x < game.head.x,  # food left
+            game.food.x > game.head.x,  # food right
+            game.food.y < game.head.y,  # food up
+            game.food.y > game.head.y  # food down
+        ]
 
         return np.array(state, dtype=int)
 
@@ -72,7 +73,8 @@ class Agent:
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE)
+            mini_sample = random.sample(
+                self.memory, BATCH_SIZE)  # list of tuples
         else:
             mini_sample = self.memory
 
@@ -96,7 +98,7 @@ class Agent:
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
-        
+
         return final_move
 
 
@@ -111,21 +113,22 @@ def train():
         # get old state
         state_old = agent.get_state(game)
 
-        #get move
+        # get move
         final_move = agent.get_action(state_old)
 
-        # lerform move and get new state
+        # perform move and get new state
         reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
 
         # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+        agent.train_short_memory(
+            state_old, final_move, reward, state_new, done)
 
         #remember
         agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
-            # Train long memory, plot result
+            # train long memory, plot result
             game.reset()
             agent.n_games += 1
             agent.train_long_memory()
