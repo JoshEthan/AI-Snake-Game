@@ -15,13 +15,13 @@ class Linear_QNet(nn.Module):
         x = self.linear2(x)
         return x
 
-    def save(self,file_name='model.pth'):
-        model_folder_path = "./model"
+    def save(self, file_name='model.pth'):
+        model_folder_path = './model'
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
 
-        file_name = os.path.join(model_folder_path,file_name)
-        torch.save(self.state_dic(),file_name)
+        file_name = os.path.join(model_folder_path, file_name)
+        torch.save(self.state_dict(), file_name)
 
 
 class QTrainer:
@@ -56,14 +56,13 @@ class QTrainer:
             if not done[idx]:
                 Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
 
-            target[idx][torch.argmax(action).item] = Q_new
+            target[idx][torch.argmax(action[idx]).item()] = Q_new
 
         #2: r + y * max(next_predicted Q value)
         #pred.clone()
         #pred[argmax(action)] = Q_new
-
         self.optimazer.zero_grad()
-        loss = criterion(target, pred)
+        loss = self.criterion(target, pred)
         loss.backward()
 
         self.optimazer.step()
